@@ -1,6 +1,7 @@
 package com.pager.oncall.oncallpager;
 
 import android.app.AlertDialog;
+import android.app.Service;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -46,6 +47,17 @@ public class OncallPager extends ActionBarActivity {
         addListenersOnButton();
         gson = new Gson();
         prefs = getSharedPreferences(globals.getSharedPrefFile(), Context.MODE_PRIVATE);
+    }
+
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        SMSReceiver recv = new SMSReceiver();
+
+        globals = Globals.getInstance();
+        addListenersOnButton();
+        gson = new Gson();
+        prefs = getSharedPreferences(globals.getSharedPrefFile(), Context.MODE_PRIVATE);
+
+        return Service.START_STICKY;
     }
 
     public void showDialog(final String[] pattern_array, final boolean[] checked_vals,
