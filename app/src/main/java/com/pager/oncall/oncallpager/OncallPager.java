@@ -1,24 +1,40 @@
 package com.pager.oncall.oncallpager;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
+import android.nfc.cardemulation.HostApduService;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.Toast;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 
 public class OncallPager extends ActionBarActivity {
 
     Button add_pattern_button, view_patterns_button;
     Globals globals;
+    Gson gson;
+    SharedPreferences prefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +44,74 @@ public class OncallPager extends ActionBarActivity {
 
         globals = Globals.getInstance();
         addListenersOnButton();
+        gson = new Gson();
+        prefs = getSharedPreferences(globals.getSharedPrefFile(), Context.MODE_PRIVATE);
+    }
+
+    public void showDialog(final String[] pattern_array, final boolean[] checked_vals,
+                           final HashMap<String, Boolean> patterns) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Patterns")
+                .setCancelable(false)
+                .setMultiChoiceItems(pattern_array, checked_vals, new DialogInterface.OnMultiChoiceClickListener() {
+                    public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+                        if (isChecked) {
+                            patterns.put(pattern_array[which], true);
+                        } else {
+                            patterns.put(pattern_array[which], false);
+                        }
+                    }
+                })
+                .setNeutralButton("Close", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        writeSharedPref("patterns", patterns);
+
+                        dialog.dismiss();
+                    }
+                });
+        builder.create();
+        builder.show();
+    }
+
+    private void writeSharedPref(String key, Object value) {
+        SharedPreferences prefs = getSharedPreferences(globals.getSharedPrefFile(), Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        String json = gson.toJson(value);
+        editor.putString(key, json);
+        editor.commit();
+    }
+
+    private void addPattern(String pattern, boolean value) {
+        HashMap<String, Boolean> patterns = getPatterns();
+
+        patterns.put(pattern, value);
+        String json = gson.toJson(patterns);
+
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("patterns", json);
+        editor.commit();
+    }
+
+    private HashMap<String, Boolean> getPatterns() {
+        HashMap<String, Boolean> patterns = gson.fromJson(prefs.getString("patterns", null), new TypeToken<HashMap<String, Boolean>>() {}.getType());
+
+        if (patterns == null) {
+            patterns = new HashMap<String, Boolean>();
+        }
+        return patterns;
+    }
+
+    private HashMap<String, Boolean> findActivePatterns(HashMap<String, Boolean> patterns) {
+        HashMap<String, Boolean> activePatterns = new HashMap<String, Boolean>();
+        for (String pattern : patterns.keySet()) {
+            if (patterns.get(pattern)) {
+                activePatterns.put(pattern, true);
+            }
+        }
+
+        return activePatterns;
     }
 
     public void addListenersOnButton() {
@@ -39,7 +123,9 @@ public class OncallPager extends ActionBarActivity {
             public void onClick(View arg0) {
                 EditText patternField = (EditText)findViewById(R.id.pattern_str);
                 String patternText = patternField.getText().toString();
-                globals.addPattern(patternText);
+
+                addPattern(patternText, true);
+
                 Toast.makeText(getBaseContext(), "Added " + patternText, Toast.LENGTH_LONG).show();
             }
         });
@@ -47,25 +133,23 @@ public class OncallPager extends ActionBarActivity {
         view_patterns_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View arg0) {
-                AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                        getBaseContext());
+                Log.d("PAGER", "clicked the button!");
 
-                // set title
-                alertDialogBuilder.setTitle("Patterns");
+                HashMap<String, Boolean> patterns = getPatterns();
 
-                // set dialog message
-                alertDialogBuilder
-                        .setNegativeButton("Close",new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog,int id) {
-                                dialog.cancel();
-                            }
-                        });
+                if (patterns.size() > 0) {
+                    String[] patternStrings = new String[patterns.size()];
+                    boolean[] isSet = new boolean[patterns.size()];
 
-                // create alert dialog
-                AlertDialog alertDialog = alertDialogBuilder.create();
+                    int index = 0;
+                    for (String pattern : patterns.keySet()) {
+                        patternStrings[index] = pattern;
+                        isSet[index] = patterns.get(pattern);
+                        index++;
+                    }
 
-                // show it
-                alertDialog.show();
+                    showDialog(patternStrings, isSet, patterns);
+                }
             }
         });
     }
