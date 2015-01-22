@@ -32,9 +32,9 @@ import java.util.HashMap;
 public class OncallPager extends ActionBarActivity {
 
     Button add_pattern_button, view_patterns_button;
-    Globals globals;
-    Gson gson;
-    SharedPreferences prefs;
+    private static Globals globals;
+    private static Gson gson;
+    private static SharedPreferences prefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,8 +74,7 @@ public class OncallPager extends ActionBarActivity {
         builder.show();
     }
 
-    private void writeSharedPref(String key, Object value) {
-        SharedPreferences prefs = getSharedPreferences(globals.getSharedPrefFile(), Context.MODE_PRIVATE);
+    private static void writeSharedPref(String key, Object value) {
         SharedPreferences.Editor editor = prefs.edit();
 
         String json = gson.toJson(value);
@@ -83,7 +82,7 @@ public class OncallPager extends ActionBarActivity {
         editor.commit();
     }
 
-    private void addPattern(String pattern, boolean value) {
+    private static void addPattern(String pattern, boolean value) {
         HashMap<String, Boolean> patterns = getPatterns();
 
         patterns.put(pattern, value);
@@ -94,7 +93,7 @@ public class OncallPager extends ActionBarActivity {
         editor.commit();
     }
 
-    private HashMap<String, Boolean> getPatterns() {
+    public static HashMap<String, Boolean> getPatterns() {
         HashMap<String, Boolean> patterns = gson.fromJson(prefs.getString("patterns", null), new TypeToken<HashMap<String, Boolean>>() {}.getType());
 
         if (patterns == null) {
@@ -103,7 +102,7 @@ public class OncallPager extends ActionBarActivity {
         return patterns;
     }
 
-    private HashMap<String, Boolean> findActivePatterns(HashMap<String, Boolean> patterns) {
+    public static HashMap<String, Boolean> findActivePatterns(HashMap<String, Boolean> patterns) {
         HashMap<String, Boolean> activePatterns = new HashMap<String, Boolean>();
         for (String pattern : patterns.keySet()) {
             if (patterns.get(pattern)) {

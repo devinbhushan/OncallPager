@@ -20,6 +20,8 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".PageDialog"></activity>
+
         // SMS Receiver
         <receiver android:name="com.pager.oncall.oncallpager.SMSReceiver" android:enabled="true">
             <intent-filter>
