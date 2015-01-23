@@ -28,14 +28,13 @@
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
         </receiver>
-        <receiver
-            android:name="com.pager.oncall.oncallpager.BootReceiver"
-            android:enabled="true"
-            android:exported="true"
-            android:label="BootReceiver">
+
+        <receiver android:name="com.pager.oncall.oncallpager.BootReceiver" android:enabled="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
+        <activity android:name="com.pager.oncall.oncallpager.BackgroundActivity"></activity>
     </application>
 </manifest>

@@ -34,7 +34,7 @@ public class OncallPager extends ActionBarActivity {
 
     Button add_pattern_button, view_patterns_button;
     private static Globals globals;
-    private static Gson gson;
+    private static Gson gson = new Gson();
     private static SharedPreferences prefs;
 
     @Override
@@ -45,19 +45,11 @@ public class OncallPager extends ActionBarActivity {
 
         globals = Globals.getInstance();
         addListenersOnButton();
-        gson = new Gson();
         prefs = getSharedPreferences(globals.getSharedPrefFile(), Context.MODE_PRIVATE);
     }
 
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        SMSReceiver recv = new SMSReceiver();
-
-        globals = Globals.getInstance();
-        addListenersOnButton();
-        gson = new Gson();
-        prefs = getSharedPreferences(globals.getSharedPrefFile(), Context.MODE_PRIVATE);
-
-        return Service.START_STICKY;
+    public static void setPrefs(SharedPreferences prefs) {
+        OncallPager.prefs = prefs;
     }
 
     public void showDialog(final String[] pattern_array, final boolean[] checked_vals,
@@ -106,11 +98,15 @@ public class OncallPager extends ActionBarActivity {
     }
 
     public static HashMap<String, Boolean> getPatterns() {
-        HashMap<String, Boolean> patterns = gson.fromJson(prefs.getString("patterns", null), new TypeToken<HashMap<String, Boolean>>() {}.getType());
+        String patternJSON = prefs.getString("patterns", "");
+        HashMap<String, Boolean> patterns;
 
-        if (patterns == null) {
+        if (patternJSON == "") {
             patterns = new HashMap<String, Boolean>();
+        } else {
+            patterns = gson.fromJson(patternJSON, new TypeToken<HashMap<String, Boolean>>() {}.getType());
         }
+
         return patterns;
     }
 
